@@ -1,23 +1,21 @@
 import os
 import socket
-
-import requests
 from bs4 import BeautifulSoup
 
 HOST = 'www.google.com'  # Server hostname
 PORT = 80  # Port
 
-#Create the client socket and connect it to host + port
+# Create the client socket and connect it to host + port
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = (HOST, PORT)
 client_socket.connect(server_address)
 
-#Send a header to the host
+# Send a header to the host
 request_header = b'GET / HTTP/1.0\r\nHost: www.google.com\r\n\r\n'
 client_socket.sendall(request_header)
 
 response = ''
-while True: #While client is still receiving bytes, keep reading and decoding
+while True:  # While client is still receiving bytes, keep reading and decoding
     recv = client_socket.recv(512)
     if not recv:
         break
@@ -41,16 +39,18 @@ def saveImagesLocally():
 
     for img in images:
         if img.has_attr('src'):
-            req = requests.get("http://" + HOST + "/" + img['src'], allow_redirects=True)
-            print("http://" + HOST + "/" + img['src'])
+            req = ('GET /' + img['src'] + 'HTTP/1.0\r\nHost: www.google.com\r\n\r\n').encode()
+            client_socket.sendall(request_header)
             try:
-                open(img['src'], 'wb').write(req.content)
-            except FileNotFoundError as e:
+                open(img['src'], 'wb').write(req)
+            except FileNotFoundError:
                 dirName = 'C:/Users/bryan/PycharmProjects/CN-HTTPSocket' + img['src']
                 makedirs(dirName)
-                print("Directory ", dirName, " Created ")
-                open('C:/Users/bryan/PycharmProjects/CN-HTTPSocket' + img['src'], 'wb').write(req.content)
+                print("Directory ", dirName, " Created to have proper image locations")
+                open('C:/Users/bryan/PycharmProjects/CN-HTTPSocket' + img['src'], 'wb').write(req)
                 continue
+
+
 
 
 def makedirs(name, mode=0o777, exist_ok=False):
@@ -68,16 +68,14 @@ def makedirs(name, mode=0o777, exist_ok=False):
         if tail == cdir:
             return
     try:
-        print(name)
         if '.' in name:
-            print("Skipping cuz it's a file")
+            print("Skipping " + name + " cuz it's a file extension and not folder")
             pass
         else:
             os.mkdir(name, mode)
     except OSError:
         if not exist_ok or not os.path.isdir(name):
             raise
-
 
 if __name__ == '__main__':
     saveBodyToHtml()
