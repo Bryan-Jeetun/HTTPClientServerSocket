@@ -7,61 +7,50 @@ from bs4 import BeautifulSoup
 HOST = 'www.google.com'  # Server hostname
 PORT = 80  # Port
 
+#Create the client socket and connect it to host + port
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_address = (HOST, PORT)
+client_socket.connect(server_address)
 
-def getResponse():
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_address = (HOST, PORT)
-    client_socket.connect(server_address)
+#Send a header to the host
+request_header = b'GET / HTTP/1.0\r\nHost: www.google.com\r\n\r\n'
+client_socket.sendall(request_header)
 
-    request_header = b'GET / HTTP/1.0\r\nHost: www.google.com\r\n\r\n'
-    client_socket.sendall(request_header)
-
-    r = requests.get('http://www.google.com')
-
-    response = ''
-    while True:
-        if r.encoding is None:
-            recv = client_socket.recv(1024)
-            if not recv:
-                break
-            response += str(recv.decode() + "\n")
-        else:
-            recv = client_socket.recv(1024)
-            if not recv:
-                break
-            response += str(recv.decode(r.encoding) + "\n")
-    client_socket.close()
-    return response
+response = ''
+while True: #While client is still receiving bytes, keep reading and decoding
+    recv = client_socket.recv(512)
+    if not recv:
+        break
+    try:
+        response += str(recv.decode() + "\n")
+    except UnicodeDecodeError as e:
+        print("Using ISO-8859-1 to decode message")
+        response += str(recv.decode("ISO-8859-1") + "\n")
 
 
 def saveBodyToHtml():
     with open("index.html", 'wb') as fd:
-        for line in getBody():
+        for line in response:
             fd.write(bytes(line.encode()))
 
 
 def saveImagesLocally():
-    soup = BeautifulSoup(getResponse(), "lxml")
+    soup = BeautifulSoup(response, "lxml")
 
     images = soup.find_all('img')
 
     for img in images:
         if img.has_attr('src'):
-            r = requests.get("http://" + HOST + "/" + img['src'], allow_redirects=True)
+            req = requests.get("http://" + HOST + "/" + img['src'], allow_redirects=True)
             print("http://" + HOST + "/" + img['src'])
             try:
-                open(img['src'], 'wb').write(r.content)
+                open(img['src'], 'wb').write(req.content)
             except FileNotFoundError as e:
                 dirName = 'C:/Users/bryan/PycharmProjects/CN-HTTPSocket' + img['src']
                 makedirs(dirName)
                 print("Directory ", dirName, " Created ")
-                open('C:/Users/bryan/PycharmProjects/CN-HTTPSocket' + img['src'], 'wb').write(r.content)
+                open('C:/Users/bryan/PycharmProjects/CN-HTTPSocket' + img['src'], 'wb').write(req.content)
                 continue
-            # open(img['src'], 'wb').write(r.content)
-
-
-def getBody():
-    return getResponse()
 
 
 def makedirs(name, mode=0o777, exist_ok=False):
@@ -93,3 +82,4 @@ def makedirs(name, mode=0o777, exist_ok=False):
 if __name__ == '__main__':
     saveBodyToHtml()
     saveImagesLocally()
+
