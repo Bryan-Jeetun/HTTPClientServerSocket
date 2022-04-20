@@ -1,12 +1,9 @@
-import os
-import select
-
 from utils import folderUtil
 import socket
 from bs4 import BeautifulSoup
 import sys
 
-HOST = 'www.google.com'  # Server hostname
+HOST = 'www.linux-ip.net'  # Server hostname
 PORT = 80  # Port
 
 ########################################
@@ -19,19 +16,11 @@ except socket.error:
     print('Failed to create socket')
     sys.exit()
 
-print('# Getting remote IP address')
-try:
-    remote_ip = socket.gethostbyname(HOST)
-except socket.gaierror:
-    print('Hostname could not be resolved. Exiting')
-    sys.exit()
-
-print('# Connecting to server, ' + HOST + ' (' + remote_ip + ')')
-client_socket.connect((remote_ip, PORT))
+client_socket.connect((HOST, PORT))
 
 # Send a header to the host
-request_header = b'GET http://www.google.com/ HTTP/1.0\r\n\r\n'
-client_socket.sendall(request_header)
+request_header = 'GET http://' + HOST + '/ HTTP/1.0\r\n\r\n'
+client_socket.sendall(request_header.encode())
 
 #####################################
 
@@ -45,7 +34,6 @@ while True:  # While client is still receiving bytes, keep reading and decoding
         response += str(recv.decode() + "\n")
     except UnicodeDecodeError as e:
         response += str(recv.decode("ISO-8859-1") + "\n")
-client_socket.close()
 
 
 def saveBodyToHtml():
@@ -58,36 +46,30 @@ def saveImagesLocally():
     soup = BeautifulSoup(response, "lxml")
     images = soup.find_all('img')
 
-    #################################################
-    # Create the client socket and connect it to host + port
-    print('# Creating socket')
-    try:
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    except socket.error:
-        print('Failed to create socket')
-        sys.exit()
-
-    print('# Getting remote IP address')
-    try:
-        remote_ip = socket.gethostbyname(HOST)
-    except socket.gaierror:
-        print('Hostname could not be resolved. Exiting')
-        sys.exit()
-
-    print('# Connecting to server, ' + HOST + ' (' + remote_ip + ')')
-    client_socket.connect((remote_ip, PORT))
-
-    #######################################
-
     for img in images:
-        if img.has_attr('src'):
-            req = 'GET ' + HOST + "/" + img['src'] + ' HTTP/1.0\r\n\r\n'
-            client_socket.sendall(req.encode("utf-8"))
+        #################################################
+        # Create the client socket and connect it to host + port
+        print('# Creating socket')
+        try:
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        except socket.error:
+            print('Failed to create socket')
+            sys.exit()
 
+        print('# Connecting to server, ' + HOST)
+        client_socket.connect((HOST, PORT))
+
+        #######################################
+        if img.has_attr('src'):
+
+            req = 'GET ' "/" + img['src'] + ' HTTP/1.0\r\nHost: ' + HOST + '\r\n\r\n'
+            # (!) Hier ipv / domain/ aangepast
+
+            client_socket.sendall(req.encode())
             reply = b''
 
             while True:
-                data = client_socket.recv(2048)
+                data = client_socket.recv(1024)
                 if not data: break
                 reply += data
 
