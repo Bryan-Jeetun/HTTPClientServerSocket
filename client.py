@@ -3,7 +3,7 @@ import socket
 from bs4 import BeautifulSoup
 import sys
 
-HOST = 'www.example.com'  # Server hostname
+HOST = 'www.tinyos.net'  # Server hostname
 PORT = 80  # Port
 
 ########################################
@@ -24,8 +24,8 @@ client_socket.sendall(request_header.encode())
 
 #####################################
 
-
 response = ''
+
 while True:  # While client is still receiving bytes, keep reading and decoding
     recv = client_socket.recv(512)
     if len(recv) < 1:
@@ -34,13 +34,30 @@ while True:  # While client is still receiving bytes, keep reading and decoding
         response += str(recv.decode() + "\n")
     except UnicodeDecodeError as e:
         response += str(recv.decode("ISO-8859-1") + "\n")
+client_socket.close()
 
 
 def saveBodyToHtml():
-    with open("index.html", 'wb') as fd:
-        for line in response:
-            fd.write(bytes(line.encode()))
+    new_data = b''
 
+    try:
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    except socket.error:
+        print('Failed to create socket')
+        sys.exit()
+
+    client_socket.connect((HOST, PORT))
+    request_header = 'GET http://' + HOST + '/ HTTP/1.0\r\n\r\n'
+    client_socket.sendall(request_header.encode())
+    with open("index.html", 'wb') as fd:
+
+        while True:
+            data = client_socket.recv(20)
+            if len(data) < 1:
+                break
+            new_data = new_data + data
+        pos = new_data.find(b'\r\n\r\n')
+        fd.write(new_data[pos + 4:])
 
 def saveImagesLocally():
     soup = BeautifulSoup(response, "lxml")
@@ -91,6 +108,7 @@ def saveImagesLocally():
                 f = open('C:/Users/bryan/PycharmProjects/CN-HTTPSocket/' + img['src'], 'wb')
                 f.write(image)
                 f.close()
+        client_socket.close()
 
 
 if __name__ == '__main__':
