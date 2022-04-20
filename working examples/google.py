@@ -1,20 +1,21 @@
 import socket
-import time
+import select
 
-domain = 'www.google.com'
-# must specify index.html for google
-full_url = 'http://www.google.com/index.html'
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect(('google.com', 80))
+s.sendall(b'GET /favicon.ico HTTP/1.0\r\n\r\n')
 
+reply = b''
 
-mysock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-mysock.connect((domain, 80))
-message = 'GET ' + full_url + ' HTTP/1.1\n\n'
-mysock.sendall(bytes(message.encode()))
+while select.select([s], [], [], 3)[0]:
+    data = s.recv(2048)
+    if not data: break
+    reply += data
 
-while True:
-    data = mysock.recv(512)
-    if len(data) < 1:
-        break
-    print(data.decode())
+headers =  reply.split(b'\r\n\r\n')[0]
+image = reply[len(headers)+4:]
 
-mysock.close()
+# save image
+f = open('google.ico', 'wb')
+f.write(image)
+f.close()
