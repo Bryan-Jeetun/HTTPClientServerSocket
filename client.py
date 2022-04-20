@@ -3,7 +3,7 @@ import socket
 from bs4 import BeautifulSoup
 import sys
 
-HOST = 'www.linux-ip.net'  # Server hostname
+HOST = 'www.example.com'  # Server hostname
 PORT = 80  # Port
 
 ########################################
@@ -84,11 +84,11 @@ def saveImagesLocally():
                 f.close()
             except FileNotFoundError as err:
                 print(err)
-                dirName = 'C:/Users/bryan/PycharmProjects/CN-HTTPSocket' + img['src']
+                dirName = 'C:/Users/bryan/PycharmProjects/CN-HTTPSocket/' + img['src']
                 folderUtil.makedirs(dirName)
                 print("Directory ", dirName, " Created ")
 
-                f = open('C:/Users/bryan/PycharmProjects/CN-HTTPSocket' + img['src'], 'wb')
+                f = open('C:/Users/bryan/PycharmProjects/CN-HTTPSocket/' + img['src'], 'wb')
                 f.write(image)
                 f.close()
 
