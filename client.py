@@ -6,27 +6,23 @@ import sys
 HOST = 'www.tinyos.net'  # Server hostname
 PORT = 80  # Port
 
-########################################
+def debug(message):
+    print("#DEBUG")
+    print("-> " + message)
 
-# Create the client socket and connect it to host + port
-print('# Creating socket')
 try:
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 except socket.error:
-    print('Failed to create socket')
     sys.exit()
 
 client_socket.connect((HOST, PORT))
 
-# Send a header to the host
 request_header = 'GET http://' + HOST + '/ HTTP/1.0\r\n\r\n'
 client_socket.sendall(request_header.encode())
 
-#####################################
-
 response = ''
 
-while True:  # While client is still receiving bytes, keep reading and decoding
+while True:
     recv = client_socket.recv(512)
     if len(recv) < 1:
         break
@@ -38,12 +34,12 @@ client_socket.close()
 
 
 def saveBodyToHtml():
+    debug("Started Saving html body")
     new_data = b''
 
     try:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     except socket.error:
-        print('Failed to create socket')
         sys.exit()
 
     client_socket.connect((HOST, PORT))
@@ -58,25 +54,22 @@ def saveBodyToHtml():
             new_data = new_data + data
         pos = new_data.find(b'\r\n\r\n')
         fd.write(new_data[pos + 4:])
+    debug("Finished Saving html body")
+
 
 def saveImagesLocally():
+    debug("Started Saving all images")
     soup = BeautifulSoup(response, "lxml")
     images = soup.find_all('img')
 
     for img in images:
-        #################################################
-        # Create the client socket and connect it to host + port
-        print('# Creating socket')
         try:
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except socket.error:
-            print('Failed to create socket')
             sys.exit()
 
-        print('# Connecting to server, ' + HOST)
         client_socket.connect((HOST, PORT))
 
-        #######################################
         if img.has_attr('src'):
 
             req = 'GET ' "/" + img['src'] + ' HTTP/1.0\r\nHost: ' + HOST + '\r\n\r\n'
@@ -93,14 +86,11 @@ def saveImagesLocally():
             headers = reply.split(b'\r\n\r\n')[0]
             image = reply[len(headers) + 4:]
 
-            print(image)
-
             try:
                 f = open(img['src'], 'wb')
                 f.write(image)
                 f.close()
-            except FileNotFoundError as err:
-                print(err)
+            except FileNotFoundError:
                 dirName = 'C:/Users/bryan/PycharmProjects/CN-HTTPSocket/' + img['src']
                 folderUtil.makedirs(dirName)
                 print("Directory ", dirName, " Created ")
@@ -109,8 +99,10 @@ def saveImagesLocally():
                 f.write(image)
                 f.close()
         client_socket.close()
+    debug("Finished Saving all images")
 
 
 if __name__ == '__main__':
     saveBodyToHtml()
     saveImagesLocally()
+
