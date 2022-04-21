@@ -74,23 +74,21 @@ def prepare_response(path, file_type):
 
 
 def parse_request(request):
+
     headers = request.decode().split('\r\n')
     try:
         method, request, protocol = headers[0].split(' ')
+
     except ValueError:
         split = headers[0].split(' ')
         method = split[0]
         request = split[1]
         protocol = split[2]
-    if request == '/': request = '/index.html'
+    if request.endswith('/'): request = '/index.html'
 
-    path = re.findall('[/a-z.]+', request)[0]
-
-    try:
-        file_type = path.split('.')[1]
-    except IndexError:
-        path = "/index.html"
-        file_type = "html"
+    print("#####", request)
+    path = re.findall('[/a-zA-Z.]+', request)[0]
+    file_type = path.split('.')[1]
 
     if method == 'POST':
         body = headers[0]
@@ -153,7 +151,8 @@ def createFileOrWritePUT(fileName, postBody):
 def process_request(msg, client):
     method, path, file_type = parse_request(msg)
     response = prepare_response(path, file_type)
-    client.send(response)
+    client.sendall(response)
+    #Changed from send to sendall
     client.close()
     print(f'({time.ctime()}) - {method} - {path}')
 

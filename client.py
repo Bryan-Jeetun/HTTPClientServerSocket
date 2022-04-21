@@ -1,3 +1,5 @@
+import time
+
 from utils import folderUtil
 import socket
 from bs4 import BeautifulSoup
@@ -10,6 +12,7 @@ PORT = 6060
 ADDR = (HOST, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = '!disconnect'
+
 
 # ================================
 
@@ -25,8 +28,9 @@ except socket.error:
 
 client_socket.connect((HOST, PORT))
 
-debug("Setting the header")
-client_socket.send(f"GET / HTTP/1.1\r\nHost:{HOST}\r\n\r\n".encode())
+debug("Setting header")
+request_header = 'GET http://' + HOST + '/ HTTP/1.0\r\n\r\n'
+client_socket.sendall(request_header.encode())
 
 response = ''
 
@@ -35,11 +39,11 @@ while True:
     if len(recv) < 1:
         break
     try:
-        response += str(recv.decode() + "\n")
+        response += str(recv.decode())
     except UnicodeDecodeError as e:
         response += str(recv.decode("ISO-8859-1") + "\n")
-client_socket.close()
 
+client_socket.close()
 
 def saveBodyToHtml():
     debug("Started Saving html body")
@@ -51,13 +55,12 @@ def saveBodyToHtml():
         sys.exit()
 
     client_socket.connect((HOST, PORT))
-    request_header = f'GET / HTTP/1.1\r\nHost: ' + HOST + '\r\n\r\n'
+    request_header = 'GET http://' + HOST + '/ HTTP/1.0\r\n\r\n'
     client_socket.sendall(request_header.encode())
-    with open("index.html", 'wb') as fd:
+    with open("indexCopy.html", 'wb') as fd:
 
         while True:
-            data = client_socket.recv(512)
-            print(data)
+            data = client_socket.recv(20)
             if len(data) < 1:
                 break
             new_data = new_data + data
@@ -65,6 +68,10 @@ def saveBodyToHtml():
         fd.write(new_data[pos + 4:])
     debug("Finished Saving html body")
 
+# def saveBodyToHtml():
+#     with open("index.html", 'wb') as fd:
+#         for line in response:
+#             fd.write(bytes(line.encode()))
 
 def saveImagesLocally():
     debug("Started Saving all images")
@@ -81,14 +88,14 @@ def saveImagesLocally():
 
         if img.has_attr('src'):
 
-            req = 'GET ' "/" + img['src'] + ' HTTP/1.1\r\nHost: ' + HOST + '\r\n\r\n'
+            req = 'GET ' "/" + img['src'] + ' HTTP/1.0\r\nHost: ' + HOST + '\r\n\r\n'
             # (!) Hier ipv / domain/ aangepast
 
             client_socket.sendall(req.encode())
             reply = b''
 
             while True:
-                data = client_socket.recv(512)
+                data = client_socket.recv(1024)
                 if not data: break
                 reply += data
 
@@ -155,10 +162,9 @@ def sendHeadRequest():
     debug("Finished sending head request")
 
 
-if __name__ == '__main__':
-    print('done')
-    #saveBodyToHtml()
-    #saveImagesLocally()
-    #sendPostRequest()
-    #sendPutRequest()
-    #sendHeadRequest()
+print('Done working for today')
+saveBodyToHtml()
+saveImagesLocally()
+sendPostRequest()
+sendPutRequest()
+sendHeadRequest()
