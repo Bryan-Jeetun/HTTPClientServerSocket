@@ -2,7 +2,6 @@ import os
 import re
 import time
 import datetime
-import json
 import socket
 import threading
 
@@ -15,10 +14,7 @@ ADDR = (HOST, PORT)
 
 # ===============================
 
-def load_config(filename):
-    with open(filename) as f:
-        config = json.load(f)
-        return config
+
 
 
 def open_static(filename, mode='rb'):
@@ -50,9 +46,17 @@ def build_header(status, file_type, last_modified):
     elif file_type == "ico":
         content_type = "Content-Type: image/x-icon"
 
-    return http_status[status].encode() + sep \
-           + content_type.encode() + sep \
-           + last_modified + sep + sep
+    http_status = ""
+    if status == "200":
+        http_status = "HTTP/1.1 200 OK"
+    elif status == "400":
+        http_status = "HTTP/1.1 400 Bad Request"
+    elif status == "404":
+        http_status = "HTTP/1.1 404 Not Found"
+
+    return http_status.encode() + "\r\n".encode() \
+           + content_type.encode() + "\r\n".encode() \
+           + last_modified + "\r\n".encode() + "\r\n".encode()
 
 
 def prepare_response(path, file_type):
@@ -102,11 +106,6 @@ def start():
             threading.Thread(target=process_request, args=(message, conn)).start()
             print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 
-
-config = load_config('config.json')
-http_status = config['http_status']
-routes = config['routes']
-sep = config['sep'].encode()
 
 print("[STARTING] Server is starting...")
 start()
