@@ -3,8 +3,14 @@ import socket
 from bs4 import BeautifulSoup
 import sys
 
-HOST = 'www.tinyos.net'  # Server hostname
-PORT = 80  # Port
+# ================================
+HEADER = 64
+HOST = 'www.tinyos.net'
+PORT = 80
+ADDR = (HOST, PORT)
+FORMAT = 'utf-8'
+DISCONNECT_MESSAGE = '!disconnect'
+# ================================
 
 def debug(message):
     print("#DEBUG")
