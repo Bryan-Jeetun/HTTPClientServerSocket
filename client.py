@@ -1,5 +1,3 @@
-import time
-
 from utils import folderUtil
 import socket
 from bs4 import BeautifulSoup
@@ -17,8 +15,7 @@ DISCONNECT_MESSAGE = '!disconnect'
 # ================================
 
 def debug(message):
-    print("#DEBUG")
-    print("-> " + message)
+    print("[CLIENT] " + message)
 
 
 try:

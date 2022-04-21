@@ -86,7 +86,6 @@ def parse_request(request):
         protocol = split[2]
     if request.endswith('/'): request = '/index.html'
 
-    print("#####", request)
     path = re.findall('[/a-zA-Z.]+', request)[0]
     file_type = path.split('.')[1]
 
@@ -101,7 +100,7 @@ def parse_request(request):
         print(f'Form data: {body}')
 
     if method == 'HEAD':
-        print(headers)
+        print(f'Form data: {headers}')
 
     return method, path, file_type
 
