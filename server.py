@@ -4,17 +4,16 @@ import time
 import datetime
 import socket
 import threading
+import random
 
 # ================================
 HEADER = 64
 HOST = socket.gethostbyname(socket.gethostname())
-PORT = 5050
+PORT = 6060
 ADDR = (HOST, PORT)
 
 
 # ===============================
-
-
 
 
 def open_static(filename, mode='rb'):
@@ -53,6 +52,10 @@ def build_header(status, file_type, last_modified):
         http_status = "HTTP/1.1 400 Bad Request"
     elif status == "404":
         http_status = "HTTP/1.1 404 Not Found"
+    elif status == "500":
+        http_status = "HTTP/1.1 500 Server Error"
+    elif status == "304":
+        http_status = "HTTP/1.1 304 Not Modified"
 
     return http_status.encode() + "\r\n".encode() \
            + content_type.encode() + "\r\n".encode() \
@@ -72,17 +75,76 @@ def prepare_response(path, file_type):
 
 def parse_request(request):
     headers = request.decode().split('\r\n')
-    method, request, protocol = headers[0].split(' ')
+    try:
+        method, request, protocol = headers[0].split(' ')
+    except ValueError:
+        split = headers[0].split(' ')
+        method = split[0]
+        request = split[1]
+        protocol = split[2]
     if request == '/': request = '/index.html'
 
     path = re.findall('[/a-z.]+', request)[0]
-    file_type = path.split('.')[1]
+
+    try:
+        file_type = path.split('.')[1]
+    except IndexError:
+        path = "/index.html"
+        file_type = "html"
 
     if method == 'POST':
-        body = headers[-1]
+        body = headers[0]
+        createFileOrWritePOST(path, body)
+        print(f'Form data: {body}')
+
+    if method == 'PUT':
+        body = headers[0]
+        createFileOrWritePUT(path, body)
         print(f'Form data: {body}')
 
     return method, path, file_type
+
+
+def createFileOrWritePOST(fileName, postBody):
+    f = open('C:/Users/bryan/PycharmProjects/CN-HTTPSocket' + fileName, 'a+')
+    split = postBody.split(" ")
+    split = split[1]
+    split = split.split("?")
+    split = split[1]
+    if "&" in split:
+        parms = split.split("&")
+        for par in parms:
+            word = par.split("=")
+            key = word[0]
+            value = word[1]
+            f.write("{" + key + " : " + value + "}" + "\n")
+    else:
+        split = split.split("=")
+        key = split[0]
+        value = split[1]
+        f.write("{" + key + " : " + value + "}" + "\n")
+
+
+def createFileOrWritePUT(fileName, postBody):
+    fileName = fileName.split(".")[0]
+    fileName = fileName + str(random.randint(0, 99999)) + '.txt'
+    f = open('C:/Users/bryan/PycharmProjects/CN-HTTPSocket' + fileName, 'a+')
+    split = postBody.split(" ")
+    split = split[1]
+    split = split.split("?")
+    split = split[1]
+    if "&" in split:
+        parms = split.split("&")
+        for par in parms:
+            word = par.split("=")
+            key = word[0]
+            value = word[1]
+            f.write("PUT Generated on " + time.ctime() + " {" + key + " : " + value + "}" + "\n")
+    else:
+        split = split.split("=")
+        key = split[0]
+        value = split[1]
+        f.write("PUT Generated on " + time.ctime() + " {" + key + " : " + value + "}" + "\n")
 
 
 def process_request(msg, client):
