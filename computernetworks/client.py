@@ -1,32 +1,47 @@
+import time
+
 from utils import folderUtil
 import socket
 from bs4 import BeautifulSoup
 import sys
 
 # ================================
-HEADER = 64
-HOST = socket.gethostbyname(socket.gethostname())
-PORT = 6060
+HOST = 'www.google.com'  # socket.gethostbyname(socket.gethostname())
+PORT = 80  # 6060
 ADDR = (HOST, PORT)
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = '!disconnect'
-
-
+PROJECT_FOLDER = 'C:/Users/bryan/PycharmProjects/CN-HTTPSocket/'
+# Replace this with the main project folder... Didn't have enough time to make it configurable :(
 # ================================
 
 def debug(message):
     print("[CLIENT] " + message)
 
 
-try:
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-except socket.error:
-    sys.exit()
+def askForUserInput():
+    print("=========================================")
+    put = input(
+        "1. Save server homepage to local\n2. Save server images to local\n3. Send a post request to server\n4. Send a put request to the server\n5. Send a head request to the server\n6. Shut down the client\n\nNumber: ")
+
+    if put == "1":
+        saveBodyToHtml()
+    elif put == "2":
+        saveImagesLocally()
+    elif put == "3":
+        sendPostRequest()
+    elif put == "4":
+        sendPutRequest()
+    elif put == "5":
+        sendHeadRequest()
+    elif put == "6":
+        debug("Shutting down client...")
+        sys.exit()
+
+
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 client_socket.connect((HOST, PORT))
 
-debug("Setting header")
-request_header = 'GET http://' + HOST + '/ HTTP/1.0\r\n\r\n'
+request_header = f'GET http://{HOST}/ HTTP/1.0\r\n\r\n'
 client_socket.sendall(request_header.encode())
 
 response = ''
@@ -42,17 +57,14 @@ while True:
 
 client_socket.close()
 
+
 def saveBodyToHtml():
     debug("Started Saving html body")
     new_data = b''
-
-    try:
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    except socket.error:
-        sys.exit()
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     client_socket.connect((HOST, PORT))
-    request_header = 'GET http://' + HOST + '/ HTTP/1.0\r\n\r\n'
+    request_header = f'GET http://{HOST}/ HTTP/1.0\r\n\r\n'
     client_socket.sendall(request_header.encode())
     with open("indexCopy.html", 'wb') as fd:
 
@@ -64,11 +76,8 @@ def saveBodyToHtml():
         pos = new_data.find(b'\r\n\r\n')
         fd.write(new_data[pos + 4:])
     debug("Finished Saving html body")
+    askForUserInput()
 
-# def saveBodyToHtml():
-#     with open("index.html", 'wb') as fd:
-#         for line in response:
-#             fd.write(bytes(line.encode()))
 
 def saveImagesLocally():
     debug("Started Saving all images")
@@ -76,17 +85,13 @@ def saveImagesLocally():
     images = soup.find_all('img')
 
     for img in images:
-        try:
-            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        except socket.error:
-            sys.exit()
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         client_socket.connect((HOST, PORT))
 
         if img.has_attr('src'):
 
             req = 'GET ' "/" + img['src'] + ' HTTP/1.0\r\nHost: ' + HOST + '\r\n\r\n'
-            # (!) Hier ipv / domain/ aangepast
 
             client_socket.sendall(req.encode())
             reply = b''
@@ -104,15 +109,16 @@ def saveImagesLocally():
                 f.write(image)
                 f.close()
             except FileNotFoundError:
-                dirName = 'C:/Users/bryan/PycharmProjects/CN-HTTPSocket/' + img['src']
+                dirName = PROJECT_FOLDER + img['src']
                 folderUtil.makedirs(dirName)
                 print("Directory ", dirName, " Created ")
 
-                f = open('C:/Users/bryan/PycharmProjects/CN-HTTPSocket/' + img['src'], 'wb')
+                f = open(PROJECT_FOLDER + img['src'], 'wb')
                 f.write(image)
                 f.close()
         client_socket.close()
     debug("Finished Saving all images")
+    askForUserInput()
 
 
 def sendPostRequest():
@@ -122,12 +128,13 @@ def sendPostRequest():
 
     data = "?key1=test&key2=blah"
 
-    header = f"POST /cool.html{data} HTTP/1.1 Host: {HOST}"
+    header = f"POST /postRequest.html{data} HTTP/1.1 Host: {HOST}"
 
     request = header
     s.send(request.encode())
     s.close()
     debug("Finished sending post request")
+    askForUserInput()
 
 
 def sendPutRequest():
@@ -137,12 +144,13 @@ def sendPutRequest():
 
     data = "?key1=test&key2=blah"
 
-    header = f"PUT /cool.txt{data} HTTP/1.1 Host: {HOST}"
+    header = f"PUT /putRequest.txt{data} HTTP/1.1 Host: {HOST}"
 
     request = header
     s.send(request.encode())
     s.close()
     debug("Finished sending put request")
+    askForUserInput()
 
 
 def sendHeadRequest():
@@ -158,10 +166,8 @@ def sendHeadRequest():
     s.close()
     debug("Finished sending head request")
 
+    askForUserInput()
 
-print('Done working for today')
-saveBodyToHtml()
-saveImagesLocally()
-sendPostRequest()
-sendPutRequest()
-sendHeadRequest()
+
+debug("Welcome to the HTTP Client Console, Press a number to continue")
+askForUserInput()

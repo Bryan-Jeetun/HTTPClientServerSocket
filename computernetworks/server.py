@@ -7,12 +7,9 @@ import threading
 import random
 
 # ================================
-HEADER = 64
 HOST = socket.gethostbyname(socket.gethostname())
 PORT = 6060
 ADDR = (HOST, PORT)
-
-
 # ===============================
 
 
@@ -151,7 +148,6 @@ def process_request(msg, client):
     method, path, file_type = parse_request(msg)
     response = prepare_response(path, file_type)
     client.sendall(response)
-    #Changed from send to sendall
     client.close()
     print(f'({time.ctime()}) - {method} - {path}')
 
@@ -167,7 +163,6 @@ def start():
         message = conn.recv(512)
         if message:
             threading.Thread(target=process_request, args=(message, conn)).start()
-            print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 
 
 print("[STARTING] Server is starting...")
