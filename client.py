@@ -11,7 +11,6 @@ ADDR = (HOST, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = '!disconnect'
 
-
 # ================================
 
 def debug(message):
@@ -27,8 +26,7 @@ except socket.error:
 client_socket.connect((HOST, PORT))
 
 debug("Setting the header")
-request_header = f'GET http://{HOST}/index.html HTTP/1.0\r\n\r\n'
-client_socket.sendall(request_header.encode())
+client_socket.send(f"GET / HTTP/1.1\r\nHost:{HOST}\r\n\r\n".encode())
 
 response = ''
 
@@ -53,12 +51,13 @@ def saveBodyToHtml():
         sys.exit()
 
     client_socket.connect((HOST, PORT))
-    request_header = 'GET http://' + HOST + '/ HTTP/1.0\r\n\r\n'
+    request_header = f'GET / HTTP/1.1\r\nHost: ' + HOST + '\r\n\r\n'
     client_socket.sendall(request_header.encode())
     with open("index.html", 'wb') as fd:
 
         while True:
-            data = client_socket.recv(20)
+            data = client_socket.recv(512)
+            print(data)
             if len(data) < 1:
                 break
             new_data = new_data + data
@@ -82,14 +81,14 @@ def saveImagesLocally():
 
         if img.has_attr('src'):
 
-            req = 'GET ' "/" + img['src'] + ' HTTP/1.0\r\nHost: ' + HOST + '\r\n\r\n'
+            req = 'GET ' "/" + img['src'] + ' HTTP/1.1\r\nHost: ' + HOST + '\r\n\r\n'
             # (!) Hier ipv / domain/ aangepast
 
             client_socket.sendall(req.encode())
             reply = b''
 
             while True:
-                data = client_socket.recv(1024)
+                data = client_socket.recv(512)
                 if not data: break
                 reply += data
 
@@ -117,18 +116,49 @@ def sendPostRequest():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
 
-    data = "?key1=test&key2=blah\n\n"
+    data = "?key1=test&key2=blah"
 
-    header = f"POST /index.html{data} HTTP/1.1 Host: {HOST}"
+    header = f"POST /cool.html{data} HTTP/1.1 Host: {HOST}"
 
     request = header
     s.send(request.encode())
-    response = s.recv(4096).decode()
     s.close()
     debug("Finished sending post request")
 
 
+def sendPutRequest():
+    debug("Started sending put request")
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
+
+    data = "?key1=test&key2=blah"
+
+    header = f"PUT /cool.txt{data} HTTP/1.1 Host: {HOST}"
+
+    request = header
+    s.send(request.encode())
+    s.close()
+    debug("Finished sending put request")
+
+
+def sendHeadRequest():
+    debug("Started sending head request")
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
+
+    header = f"HEAD / HTTP/1.1\r\nHost: {HOST}\r\nAccept: text/html\r\n\r\n"
+
+    request = header
+    s.sendall(request.encode())
+    print(s.recv(512).decode())
+    s.close()
+    debug("Finished sending head request")
+
+
 if __name__ == '__main__':
-    saveBodyToHtml()
-    saveImagesLocally()
-    sendPostRequest()
+    print('done')
+    #saveBodyToHtml()
+    #saveImagesLocally()
+    #sendPostRequest()
+    #sendPutRequest()
+    #sendHeadRequest()

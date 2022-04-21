@@ -102,6 +102,9 @@ def parse_request(request):
         createFileOrWritePUT(path, body)
         print(f'Form data: {body}')
 
+    if method == 'HEAD':
+        print(headers)
+
     return method, path, file_type
 
 
@@ -163,7 +166,7 @@ def start():
 
     while True:
         conn, addr = server.accept()
-        message = conn.recv(4096)
+        message = conn.recv(512)
         if message:
             threading.Thread(target=process_request, args=(message, conn)).start()
             print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
