@@ -10,6 +10,8 @@ HOST = 'www.google.com'  # socket.gethostbyname(socket.gethostname())
 PORT = 80  # 6060
 ADDR = (HOST, PORT)
 PROJECT_FOLDER = 'C:/Users/bryan/PycharmProjects/CN-HTTPSocket/'
+
+
 # Replace this with the main project folder... Didn't have enough time to make it configurable :(
 # ================================
 
@@ -126,12 +128,12 @@ def sendPostRequest():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
 
-    data = "?key1=test&key2=blah"
+    FILE = input("Write to what file, don't forget the extension!\nEnter:")
+    DATA = input("What data should we send? (Use this format: key1=test&key2=blah)\nEnter:")
 
-    header = f"POST /postRequest.html{data} HTTP/1.1 Host: {HOST}"
+    header = f"POST /{FILE}?{DATA} HTTP/1.1 Host: {HOST}"
 
-    request = header
-    s.send(request.encode())
+    s.send(header.encode())
     s.close()
     debug("Finished sending post request")
     askForUserInput()
@@ -141,10 +143,10 @@ def sendPutRequest():
     debug("Started sending put request")
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
+    FILE = input("What should the name of the file be?\nEnter:")
+    DATA = input("What data should we send? (Use this format: key1=value1&key2=value2)\nEnter:")
 
-    data = "?key1=test&key2=blah"
-
-    header = f"PUT /putRequest.txt{data} HTTP/1.1 Host: {HOST}"
+    header = f"PUT /{FILE}.txt?{DATA} HTTP/1.1 Host: {HOST}"
 
     request = header
     s.send(request.encode())
@@ -169,5 +171,6 @@ def sendHeadRequest():
     askForUserInput()
 
 
-debug("Welcome to the HTTP Client Console, Press a number to continue")
+debug(f"Connected to: {HOST}:{PORT} with main project folder set to {PROJECT_FOLDER}")
+debug("Welcome to the HTTP Client Console")
 askForUserInput()

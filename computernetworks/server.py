@@ -93,6 +93,7 @@ def parse_request(request):
 
     if method == 'PUT':
         body = headers[0]
+        print("Writing a PUTTTTTTTTTT")
         createFileOrWritePUT(path, body)
         print(f'Form data: {body}')
 
