@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup
 import sys
 
 # ================================
-HOST = 'www.google.com'  # socket.gethostbyname(socket.gethostname())
-PORT = 80  # 6060
+HOST = 'www.google.com' #socket.gethostbyname(socket.gethostname())
+PORT = 80 #6060
 ADDR = (HOST, PORT)
 PROJECT_FOLDER = 'C:/Users/bryan/PycharmProjects/CN-HTTPSocket/'
 
@@ -39,11 +39,12 @@ def askForUserInput():
         sys.exit()
 
 
+debug("Started connecting")
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 client_socket.connect((HOST, PORT))
 
-request_header = f'GET http://{HOST}/ HTTP/1.0\r\n\r\n'
+request_header = f'GET http://{HOST}/ HTTP/1.0\r\nHost: ' + HOST + '\r\n\r\n'
 client_socket.sendall(request_header.encode())
 
 response = ''

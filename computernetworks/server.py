@@ -10,6 +10,8 @@ import random
 HOST = socket.gethostbyname(socket.gethostname())
 PORT = 6060
 ADDR = (HOST, PORT)
+
+
 # ===============================
 
 
@@ -66,12 +68,12 @@ def prepare_response(path, file_type):
         header = build_header('200', file_type, last_modified)
     else:
         header = build_header('404', file_type, last_modified)
+    # continue for the other errors
 
     return header + body
 
 
 def parse_request(request):
-
     headers = request.decode().split('\r\n')
     try:
         method, request, protocol = headers[0].split(' ')
@@ -93,7 +95,6 @@ def parse_request(request):
 
     if method == 'PUT':
         body = headers[0]
-        print("Writing a PUTTTTTTTTTT")
         createFileOrWritePUT(path, body)
         print(f'Form data: {body}')
 
